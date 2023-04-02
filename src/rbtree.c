@@ -192,19 +192,29 @@ void left_rotate(rbtree *t, node_t *node) {
   parent_node->parent = node;
 }
 
+/* 특정 키 검색 */
 node_t *rbtree_find(const rbtree *t, const key_t key) {
-  // TODO: implement find
-  return t->root;
+  node_t *current_node = t->root;
+  while(key != current_node->key) {
+    if(current_node == t->nil) return NULL;
+    if(key < current_node->key) current_node = current_node->left;
+    else current_node = current_node->right;
+  }
+  return current_node;
 }
 
+/* 최소값 탐색 */
 node_t *rbtree_min(const rbtree *t) {
-  // TODO: implement find
-  return t->root;
+  node_t *current_node = t->root;
+  while(current_node->left != t->nil) current_node = current_node->left;
+  return current_node;
 }
 
+/* 최대값 탐색 */
 node_t *rbtree_max(const rbtree *t) {
-  // TODO: implement find
-  return t->root;
+  node_t *current_node = t->root;
+  while(current_node->right != t->nil) current_node = current_node->right;
+  return current_node;
 }
 
 int rbtree_erase(rbtree *t, node_t *p) {
