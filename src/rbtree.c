@@ -1,8 +1,8 @@
 #include "rbtree.h"
 #include <stdlib.h>
 #include <stdio.h>
-#define MAX_QUEUE_SIZE 20
 
+void traverse_and_delete_node(rbtree *, node_t *);
 void rbtree_insert_fixup(rbtree *t, node_t *node);
 void left_rotate(rbtree *t, node_t *node);
 void right_rotate(rbtree *t, node_t *node);
@@ -21,10 +21,25 @@ rbtree *new_rbtree(void)
   return tree;
 }
 
+/* 2️⃣ RB tree 구조체가 차지했던 메모리 반환 */
+// 트리를 순회하면서 각 노드의 메모리를 반환하는 함수
 void delete_rbtree(rbtree *t)
 {
-  // TODO: reclaim the tree nodes's memory
+  node_t *node = t->root;
+  if (node != t->nil)
+    traverse_and_delete_node(t, node);
+  free(t->nil);
   free(t);
+}
+
+// 자식 노드와 현재 노드의 메모리를 반환하는 함수
+void traverse_and_delete_node(rbtree *t, node_t *node)
+{
+  if (node->left != t->nil)
+    traverse_and_delete_node(t, node->left);
+  if (node->right != t->nil)
+    traverse_and_delete_node(t, node->right);
+  free(node);
 }
 
 /* 3️⃣ key 추가 */
