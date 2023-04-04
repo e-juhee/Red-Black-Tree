@@ -6,6 +6,7 @@
 void rbtree_insert_fixup(rbtree *t, node_t *node);
 void left_rotate(rbtree *t, node_t *node);
 void right_rotate(rbtree *t, node_t *node);
+node_t *get_next_node(const rbtree *t, node_t *p);
 
 /* 1️⃣ RB tree 구조체 생성 */
 // 새 트리를 생성하는 함수
@@ -229,114 +230,40 @@ int rbtree_erase(rbtree *t, node_t *p)
   return 0;
 }
 
-// TODO: implement to_array
-node_t *next_node(const rbtree *t, node_t *p);
-
+/* 7️⃣ array로 변환 */
+// `t`를 inorder로 `n`번 순회한 결과를 `arr`에 담는 함수
 int rbtree_to_array(const rbtree *t, key_t *arr, const size_t n)
 {
-  node_t *current_node = rbtree_min(t);
-  arr[0] = current_node->key;
+  node_t *current = rbtree_min(t);
+  arr[0] = current->key;
   for (int i = 1; i < n; i++)
   {
-    current_node = next_node(t, current_node);
-    arr[i] = current_node->key;
+    if (current == t->nil)
+      break;
+    current = get_next_node(t, current);
+    if (current == t->nil)
+      break;
+    arr[i] = current->key;
   }
   return 0;
 }
 
-node_t *next_node(const rbtree *t, node_t *p)
+// 키 값을 기준으로 다음 노드를 반환하는 함수
+node_t *get_next_node(const rbtree *t, node_t *p)
 {
-  if (p->right == t->nil)
+  node_t *current = p->right;
+  if (current == t->nil) // 오른쪽 자식이 없으면
   {
-    node_t *current_node = p;
-    int is_left = 0;
+    current = p;
     while (1)
     {
-      if (current_node->parent->right == current_node)
-        current_node = current_node->parent;
+      if (current->parent->right == current) // current가 오른쪽 자식인 경우
+        current = current->parent;           // 부모 노드로 이동 후 이어서 탐색
       else
-        return current_node->parent;
+        return current->parent; // current가 왼쪽 자식인 경우 부모 리턴
     }
   }
-  node_t *current_node = p->right;
-  while (current_node->left != t->nil)
-  {
-    current_node = current_node->left;
-  }
-  return current_node;
+  while (current->left != t->nil) // 왼쪽 자식이 있으면
+    current = current->left;      // 왼쪽 끝으로 이동
+  return current;
 }
-
-/* TEST를 위한 큐 */
-int front = -1;
-int rear = 0;
-node_t *queue[MAX_QUEUE_SIZE];
-int depthq[MAX_QUEUE_SIZE];
-
-void enqueue(node_t *value, int depth)
-{
-  if (rear == MAX_QUEUE_SIZE - 1)
-  {
-    printf("Queue Overflow\n");
-    return;
-  }
-  if (front == -1)
-    front = 0;
-  queue[rear] = value;
-  depthq[rear] = depth;
-  rear++;
-}
-
-node_t *dequeue()
-{
-  if (front == -1 || front >= rear)
-  {
-    printf("Queue Underflow\n");
-    return NULL;
-  }
-  node_t *value = queue[front];
-  front++;
-  return value;
-}
-
-int get_depth()
-{
-  return depthq[front - 1];
-}
-/*
-int main(void){
-  rbtree *tree = new_rbtree();
-  rbtree_insert(tree, 10);
-  rbtree_insert(tree, 5);
-  rbtree_insert(tree, 5);
-  rbtree_insert(tree, 34);
-  rbtree_insert(tree, 6);
-  rbtree_insert(tree, 23);
-  rbtree_insert(tree, 12);
-  rbtree_insert(tree, 12);
-  rbtree_insert(tree, 6);
-  rbtree_insert(tree, 12);
-
-  // 테스트 : rbtree_to_array
-  int arr[8];
-  rbtree_to_array(tree, arr, 8);
-  for(int i = 0; i < 8; i++) {
-    printf("%d ", arr[i]);
-  }
-
-  node_t *current = tree->root;
-  char *red = "RED";
-  char *black = "BLACK";
-
-  enqueue(current, 1);
-  while(front < rear) {
-    node_t *tmp = dequeue();
-    int dep = get_depth();
-    // printf("\nkey %d color %s depth %d parent %d left %d right %d", tmp->key, tmp->color ? black : red, dep, tmp->parent->key, tmp->left->key, tmp->right->key);
-    printf("\nkey %d color %s depth %d", tmp->key, tmp->color ? black : red, dep);
-    if(tmp->left != tree->nil) enqueue(tmp->left, dep+1);
-    if(tmp->right != tree->nil) enqueue(tmp->right, dep+1);
-  }
-
-  return 0;
-}
-*/
