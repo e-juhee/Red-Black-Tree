@@ -188,42 +188,39 @@ void left_rotate(rbtree *t, node_t *node)
   node_left->parent = parent;  // 3-2) 왼쪽 자식의 부모를 부모로 변경 (양방향 연결)
 }
 
+/* 4️⃣ key 탐색 */
+// key에 해당하는 노드를 반환하는 함수
 node_t *rbtree_find(const rbtree *t, const key_t key)
 {
-  // TODO: implement find
-  node_t *current_node = t->root;
-  while (key != current_node->key)
+  node_t *current = t->root;
+  while (current != t->nil)
   {
-    if (current_node == t->nil)
-      return NULL;
-    if (key < current_node->key)
-      current_node = current_node->left;
+    if (key == current->key)
+      return current;
     else
-      current_node = current_node->right;
+      current = (key < current->key) ? current->left : current->right;
   }
-  return current_node;
+  return NULL; // 해당 key값을 가진 노드가 없을 경우 NULL 반환
 }
 
+/* 5️⃣ 최소값을 가진 node 탐색 */
+// key가 최소값에 해당하는 노드를 반환하는 함수
 node_t *rbtree_min(const rbtree *t)
 {
-  // TODO: implement find
-  node_t *current_node = t->root;
-  while (current_node->left != t->nil)
-  {
-    current_node = current_node->left;
-  }
-  return current_node;
+  node_t *current = t->root;
+  while (current->left != t->nil)
+    current = current->left;
+  return current;
 }
 
+/* 6️⃣ 최대값을 가진 node 탐색 */
+// key가 최대값에 해당하는 노드를 반환하는 함수
 node_t *rbtree_max(const rbtree *t)
 {
-  // TODO: implement find
-  node_t *current_node = t->root;
-  while (current_node->right != t->nil)
-  {
-    current_node = current_node->right;
-  }
-  return current_node;
+  node_t *current = t->root;
+  while (current->right != t->nil)
+    current = current->right;
+  return current;
 }
 
 int rbtree_erase(rbtree *t, node_t *p)
