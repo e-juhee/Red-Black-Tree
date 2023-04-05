@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-void traverse_and_delete_node(rbtree *, node_t *);
+void traverse_and_delete_node(rbtree *t, node_t *node);
 void rbtree_insert_fixup(rbtree *t, node_t *node);
 void left_rotate(rbtree *t, node_t *node);
 void right_rotate(rbtree *t, node_t *node);
@@ -14,13 +14,17 @@ void exchange_color(node_t *a, node_t *b);
 // 새 트리를 생성하는 함수
 rbtree *new_rbtree(void)
 {
-  rbtree *tree = (rbtree *)calloc(1, sizeof(rbtree));
-  // NIL 노드
+  // tree 구조체 동적 할당
+  rbtree *t = (rbtree *)calloc(1, sizeof(rbtree));
+
+  // nil 노드 생성 및 초기화
   node_t *nil = (node_t *)calloc(1, sizeof(node_t));
+  nil->color = RBTREE_BLACK; // nil 노드는 항상 BLACK
+
   // tree의 nil과 root를 nil 노드로 설정 (tree가 빈 경우 root는 nil노드여야 한다.)
-  tree->nil = tree->root = nil;
-  nil->color = RBTREE_BLACK;
-  return tree;
+  t->nil = t->root = nil;
+
+  return t;
 }
 
 /* 2️⃣ RB tree 구조체가 차지했던 메모리 반환 */
@@ -30,17 +34,20 @@ void delete_rbtree(rbtree *t)
   node_t *node = t->root;
   if (node != t->nil)
     traverse_and_delete_node(t, node);
+
+  // nil 노드와 rbtree 구조체의 메모리를 반환
   free(t->nil);
   free(t);
 }
 
-// 자식 노드와 현재 노드의 메모리를 반환하는 함수
+// 각 노드와 그 자식 노드들의 메모리를 반환하는 함수
 void traverse_and_delete_node(rbtree *t, node_t *node)
 {
   if (node->left != t->nil)
     traverse_and_delete_node(t, node->left);
   if (node->right != t->nil)
     traverse_and_delete_node(t, node->right);
+  // 현재 노드의 메모리를 반환
   free(node);
 }
 
@@ -117,8 +124,8 @@ void rbtree_insert_fixup(rbtree *t, node_t *node)
   if (uncle->color == RBTREE_RED)
   {
     parent->color = RBTREE_BLACK;
-    grand_parent->color = RBTREE_RED;
     uncle->color = RBTREE_BLACK;
+    grand_parent->color = RBTREE_RED;
     rbtree_insert_fixup(t, grand_parent);
     return;
   }
@@ -129,33 +136,29 @@ void rbtree_insert_fixup(rbtree *t, node_t *node)
     // [CASE 2]: 부모의 형제가 BLACK & 부모가 왼쪽 자식 & 현재 노드가 왼쪽 자식인 경우
     {
       right_rotate(t, parent);
-      parent->color = RBTREE_BLACK;
-      parent->right->color = RBTREE_RED;
+      exchange_color(parent, parent->right);
       return;
     }
 
     // [CASE 3]: 부모의 형제가 BLACK & 부모가 왼쪽 자식 & 현재 노드가 오른쪽 자식인 경우
     left_rotate(t, node);
     right_rotate(t, node);
-    node->color = RBTREE_BLACK;
-    node->right->color = RBTREE_RED;
+    exchange_color(node, node->right);
     return;
   }
 
   if (is_left)
   {
-    // [CASE 2]: 부모의 형제가 BLACK & 부모가 오른쪽 자식 & 현재 노드가 왼쪽 자식인 경우
+    // [CASE 3]: 부모의 형제가 BLACK & 부모가 오른쪽 자식 & 현재 노드가 왼쪽 자식인 경우
     right_rotate(t, node);
     left_rotate(t, node);
-    node->color = RBTREE_BLACK;
-    node->left->color = RBTREE_RED;
+    exchange_color(node, node->left);
     return;
   }
 
-  // [CASE 3]: 부모의 형제가 BLACK & 부모가 오른쪽 자식 & 현재 노드가 오른쪽 자식인 경우
+  // [CASE 2]: 부모의 형제가 BLACK & 부모가 오른쪽 자식 & 현재 노드가 오른쪽 자식인 경우
   left_rotate(t, parent);
-  parent->color = RBTREE_BLACK;
-  parent->left->color = RBTREE_RED;
+  exchange_color(parent, parent->left);
 }
 
 // 오른쪽으로 회전하는 함수
@@ -169,17 +172,17 @@ void right_rotate(rbtree *t, node_t *node)
   if (parent == t->root)
     t->root = node;
   else
-  { // 1-1) grand_parent의 자식을 현재 노드로 변경
+  { // 1-1) 노드의 부모를 grand_parent로 변경
     if (grand_parent->left == parent)
       grand_parent->left = node;
     else
       grand_parent->right = node;
   }
-  node->parent = grand_parent; // 1-2) 노드의 부모를 grand_parent로 변경 (양방향 연결)
-  parent->parent = node;       // 2-1) 부모의 부모를 현재 노드로 변경
-  node->right = parent;        // 2-2) 부모를 현재 노드의 자식으로 변경 (양방향 연결)
-  parent->left = node_right;   // 3-1) 현재 노드의 자식을 부모의 자식으로 변경
-  node_right->parent = parent; // 3-2) 오른쪽 자식의 부모를 부모로 변경 (양방향 연결)
+  node->parent = grand_parent; // 1-2) 노드를 grand_parent의 자식으로 변경 (양방향 연결)
+  parent->parent = node;       // 2-1) parent의 부모를 노드로 변경
+  node->right = parent;        // 2-2) parent를 노드의 자식으로 변경 (양방향 연결)
+  node_right->parent = parent; // 3-1) 노드의 자식의 부모를 parent로 변경
+  parent->left = node_right;   // 3-2) 노드의 자식을 부모의 자식으로 변경 (양방향 연결)
 }
 
 // 왼쪽으로 회전하는 함수
@@ -193,20 +196,20 @@ void left_rotate(rbtree *t, node_t *node)
   if (parent == t->root)
     t->root = node;
   else
-  { // 1-1) grand_parent의 자식을 현재 노드로 변경
+  { // 1-1) 노드의 부모를 grand_parent로 변경
     if (grand_parent->left == parent)
       grand_parent->left = node;
     else
       grand_parent->right = node;
   }
-  node->parent = grand_parent; // 1-2) 노드의 부모를 grand_parent로 변경 (양방향 연결)
-  parent->parent = node;       // 2-1) 부모의 부모를 현재 노드로 변경
-  node->left = parent;         // 2-2) 부모를 현재 노드의 자식으로 변경 (양방향 연결)
-  parent->right = node_left;   // 3-1) 현재 노드의 자식을 부모의 자식으로 변경
-  node_left->parent = parent;  // 3-2) 왼쪽 자식의 부모를 부모로 변경 (양방향 연결)
+  node->parent = grand_parent; // 1-2) 노드를 grand_parent의 자식으로 변경 (양방향 연결)
+  parent->parent = node;       // 2-1) parent의 부모를 노드로 변경
+  node->left = parent;         // 2-2) parent를 노드의 자식으로 변경 (양방향 연결)
+  parent->right = node_left;   // 3-1) 노드의 자식의 부모를 parent로 변경
+  node_left->parent = parent;  // 3-2) 노드의 자식을 부모의 자식으로 변경 (양방향 연결)
 }
 
-/* 4️⃣ key 탐색 */
+/* 4️⃣ 탐색 1 - key 탐색 */
 // key에 해당하는 노드를 반환하는 함수
 node_t *rbtree_find(const rbtree *t, const key_t key)
 {
@@ -221,7 +224,7 @@ node_t *rbtree_find(const rbtree *t, const key_t key)
   return NULL; // 해당 key값을 가진 노드가 없을 경우 NULL 반환
 }
 
-/* 5️⃣ 최소값을 가진 node 탐색 */
+/* 4️⃣ 탐색 2 - 최소값을 가진 node 탐색 */
 // key가 최소값에 해당하는 노드를 반환하는 함수
 node_t *rbtree_min(const rbtree *t)
 {
@@ -231,7 +234,7 @@ node_t *rbtree_min(const rbtree *t)
   return current;
 }
 
-/* 6️⃣ 최대값을 가진 node 탐색 */
+/* 4️⃣ 탐색 3 - 최대값을 가진 node 탐색 */
 // key가 최대값에 해당하는 노드를 반환하는 함수
 node_t *rbtree_max(const rbtree *t)
 {
@@ -241,7 +244,7 @@ node_t *rbtree_max(const rbtree *t)
   return current;
 }
 
-/* 7️⃣ array로 변환 */
+/* 5️⃣ array로 변환 */
 // `t`를 inorder로 `n`번 순회한 결과를 `arr`에 담는 함수
 int rbtree_to_array(const rbtree *t, key_t *arr, const size_t n)
 {
@@ -250,16 +253,16 @@ int rbtree_to_array(const rbtree *t, key_t *arr, const size_t n)
   for (int i = 1; i < n; i++)
   {
     if (current == t->nil)
-      break;
-    current = get_next_node(t, current);
+      break;                             // 노드가 끝까지 탐색된 경우 loop 탈출
+    current = get_next_node(t, current); // 다음 노드로 이동
     if (current == t->nil)
-      break;
-    arr[i] = current->key;
+      break;               // 노드가 끝까지 탐색된 경우 loop 탈출
+    arr[i] = current->key; // 현재 노드의 key 값을 배열에 저장
   }
   return 0;
 }
 
-/* 8️⃣ node 삭제 */
+/* 6️⃣ node 삭제 */
 // 노드를 삭제하는 함수
 int rbtree_erase(rbtree *t, node_t *delete)
 {
