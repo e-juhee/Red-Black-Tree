@@ -349,7 +349,7 @@ void rbtree_erase_fixup(rbtree *t, node_t *parent, int is_left)
   node_t *distant = is_left ? sibling_right : sibling_left; // 형제의 자식 중 extra_black으로부터 먼 노드
 
   if (is_left && near->color == RBTREE_RED && distant->color == RBTREE_BLACK)
-  { // [CASE D5] 형제가 BLACK, 형제의 가까운 자식이 RED, 형제의 더 먼 자식이 BLACK
+  { // [CASE D4] 형제가 BLACK, 형제의 가까운 자식이 RED, 형제의 더 먼 자식이 BLACK
     right_rotate(t, near);
     exchange_color(sibling, near);
     rbtree_erase_fixup(t, parent, is_left);
@@ -357,7 +357,7 @@ void rbtree_erase_fixup(rbtree *t, node_t *parent, int is_left)
   }
 
   if (is_left && distant->color == RBTREE_RED)
-  { // [CASE D6] 형제가 BLACK, 형제의 더 먼 자식이 RED
+  { // [CASE D5] 형제가 BLACK, 형제의 더 먼 자식이 RED
     left_rotate(t, sibling);
     exchange_color(sibling, parent);
     distant->color = RBTREE_BLACK;
@@ -365,7 +365,7 @@ void rbtree_erase_fixup(rbtree *t, node_t *parent, int is_left)
   }
 
   if (near->color == RBTREE_RED && distant->color == RBTREE_BLACK)
-  { // [CASE D5] 형제가 BLACK, 형제의 가까운 자식이 RED, 형제의 더 먼 자식이 BLACK
+  { // [CASE D4] 형제가 BLACK, 형제의 가까운 자식이 RED, 형제의 더 먼 자식이 BLACK
     left_rotate(t, near);
     exchange_color(sibling, near);
     rbtree_erase_fixup(t, parent, is_left);
@@ -373,7 +373,7 @@ void rbtree_erase_fixup(rbtree *t, node_t *parent, int is_left)
   }
 
   if (distant->color == RBTREE_RED)
-  { // [CASE D6] 형제가 BLACK, 형제의 더 먼 자식이 RED
+  { // [CASE D5] 형제가 BLACK, 형제의 더 먼 자식이 RED
     right_rotate(t, sibling);
     exchange_color(sibling, parent);
     distant->color = RBTREE_BLACK;
